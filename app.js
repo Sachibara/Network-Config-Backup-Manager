@@ -397,7 +397,7 @@
     if(state.mode==="live"){
       toast("Backup started",device.hostname+" is being queried over SSH.");
       try{
-        const result=await fetchJson("/api/devices/"+id+"/backup",{method:"POST",body:JSON.stringify({source:"running-config"})},{timeout:45000});
+        const result=await fetchJson("/api/devices/"+id+"/backup",{method:"POST",body:JSON.stringify({source:"running-config"}),timeout:45000});
         await loadData();toast("Backup completed",result.device+" v"+result.version+(result.changed?" · change detected":""));
       }catch(e){await loadData();toast("Backup failed",e.message,"error")}
       return;
@@ -423,7 +423,7 @@
     try{
       if(state.mode==="live"){
         toast("Backup-all started",devices.length+" devices queued.");
-        const result=await fetchJson("/api/backups/run-all",{method:"POST",body:"{}"},{timeout:120000});
+        const result=await fetchJson("/api/backups/run-all",{method:"POST",body:"{}",timeout:120000});
         await loadData();toast("Backup-all finished",(result.success||0)+" succeeded · "+(result.failed||0)+" failed");
       }else{
         for(const d of devices)await backupDevice(d.id);
