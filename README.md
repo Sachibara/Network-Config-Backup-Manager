@@ -14,12 +14,14 @@ This project is designed for Network Engineer, NOC, IT Infrastructure, and Netwo
 - Router and switch inventory
 - Cisco IOS / IOS XE-oriented SSH backup workflow
 - Running-config and startup-config collection
+- Safe staged restore-candidate workflow for controlled rollback review
 - Manual backups
 - Scheduled backups
 - Backup version history
 - SHA-256 change detection
 - Side-by-side configuration diff
 - Downloadable configuration snapshots
+- Side-by-side change review before rollback decisions
 - Device groups, sites, and tags
 - Backup success / failure logs
 - Local encrypted credential storage
