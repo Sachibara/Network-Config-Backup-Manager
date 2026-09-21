@@ -61,13 +61,13 @@
   }
 
   function cloneDemo(){
-    const saved=sessionStorage.getItem("config_backup_demo_state");
+    const saved=localStorage.getItem("config_backup_demo_state");
     if(saved){try{return JSON.parse(saved)}catch{}}
     return JSON.parse(JSON.stringify(window.CONFIG_BACKUP_DEMO));
   }
 
   function persistDemo(){
-    if(state.mode==="demo")sessionStorage.setItem("config_backup_demo_state",JSON.stringify(state.data));
+    if(state.mode==="demo")localStorage.setItem("config_backup_demo_state",JSON.stringify(state.data));
   }
 
   async function fetchJson(path,options={}){
@@ -97,9 +97,9 @@
     if(state.mode==="demo"){
       state.data=cloneDemo();
       state.lastRefresh=new Date();
-      setModeStatus("","Demo fabric","Simulated network estate");
+      setModeStatus("","Browser workspace","Saved locally in this browser");
       renderAll();
-      if(showToast)toast("Demo refreshed","Representative configuration history loaded.");
+      if(showToast)toast("Workspace refreshed","Browser-saved configuration history loaded.");
       return;
     }
 
@@ -383,7 +383,7 @@
     const d=state.data.devices.find(x=>x.id===id);
     Object.assign(d,body,{platform_label:body.platform==="cisco_nxos"?"Cisco NX-OS":body.platform==="arista_eos"?"Arista EOS":"Cisco IOS / IOS XE"});
     addAudit("Jim Camus","Device updated",d.hostname+" inventory and schedule settings updated.",id);
-    persistDemo();$("deviceDialog").close();renderAll();toast("Device updated",d.hostname+" saved in demo mode.");
+    persistDemo();$("deviceDialog").close();renderAll();toast("Device updated",d.hostname+" saved in this browser.");
   }
 
   function addAudit(actor,action,detail,deviceId=null){
@@ -414,7 +414,7 @@
     const backup={id:newId,device_id:id,device:device.hostname,version,source,status:"success",changed,hash,size:nextConfig.length,created_at:new Date().toISOString(),config:nextConfig};
     state.data.backups.unshift(backup);device.last_backup_at=backup.created_at;device.last_status="success";
     addAudit("Backup Engine","Backup completed",device.hostname+" version "+version+" stored"+(changed?"; configuration change detected.":"."),id);
-    persistDemo();renderAll();toast("Demo backup completed",device.hostname+" v"+version+(changed?" · change detected":""));
+    persistDemo();renderAll();toast("Browser backup completed",device.hostname+" v"+version+(changed?" · change detected":""));
   }
 
   async function backupAll(){
@@ -507,7 +507,7 @@
     }
     const id=Math.max(0,...state.data.devices.map(d=>d.id))+1;
     const d={id,...body,platform_label:body.platform==="cisco_nxos"?"Cisco NX-OS":body.platform==="arista_eos"?"Arista EOS":"Cisco IOS / IOS XE",last_backup_at:null,last_status:"never"};
-    state.data.devices.push(d);addAudit("Jim Camus","Device enrolled",d.hostname+" added to the authorized device inventory.",id);persistDemo();$("addDeviceDialog").close();renderAll();toast("Device enrolled",d.hostname+" added to demo fabric.");
+    state.data.devices.push(d);addAudit("Jim Camus","Device enrolled",d.hostname+" added to the authorized device inventory.",id);persistDemo();$("addDeviceDialog").close();renderAll();toast("Device enrolled",d.hostname+" saved in this browser workspace.");
   });
 
   const conn=$("connectionDialog");
