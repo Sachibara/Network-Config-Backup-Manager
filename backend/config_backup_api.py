@@ -605,6 +605,28 @@ def api_compare(base_id: int = Query(...,ge=1), target_id: int = Query(...,ge=1)
     return {"base":base,"target":target,"added":added,"removed":removed,"unified":unified}
 
 
+
+@app.post("/api/backups/{backup_id}/stage-restore")
+def api_stage_restore(backup_id: int):
+    with DB_LOCK, db() as conn:
+        row = conn.execute(
+            "SELECT b.*,d.hostname AS device FROM backups b JOIN devices d ON d.id=b.device_id WHERE b.id=? AND b.status='success'",
+            (backup_id,),
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404,detail="Backup not found.")
+        detail = f"{row['device']} version {row['version']} staged as a restore candidate for controlled rollback review."
+        log_audit(conn,"Restore candidate staged",detail,row["device_id"])
+        conn.commit()
+    return {
+        "ok": True,
+        "backup_id": backup_id,
+        "device": row["device"],
+        "version": row["version"],
+        "message": detail,
+    }
+
+
 @app.get("/api/backups/{backup_id}/download")
 def api_download_backup(backup_id: int):
     with DB_LOCK, db() as conn:
