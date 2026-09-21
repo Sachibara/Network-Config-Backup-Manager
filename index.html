@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a0f16">
+  <meta name="description" content="Network Config Backup Manager - configuration backup, versioning, diff, scheduling, and change-control console.">
+  <title>Network Config Backup Manager</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./demo-data.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark"><span>NC</span></div>
+      <div>
+        <strong>Config Vault</strong>
+        <small>Network Change Control</small>
+      </div>
+    </div>
+
+    <div class="agent-strip">
+      <span class="agent-led" id="modeLed"></span>
+      <div><strong id="modeTitle">Demo fabric</strong><small id="modeDetail">Simulated network estate</small></div>
+      <button class="link-btn" id="connectionButton">Configure</button>
+    </div>
+
+    <nav class="side-nav">
+      <button class="nav-item active" data-page="dashboard"><span>▦</span>Overview</button>
+      <button class="nav-item" data-page="devices"><span>▥</span>Devices <b id="deviceCountBadge">0</b></button>
+      <button class="nav-item" data-page="backups"><span>≡</span>Backups</button>
+      <button class="nav-item" data-page="compare"><span>⇆</span>Compare</button>
+      <button class="nav-item" data-page="schedules"><span>◷</span>Schedules</button>
+      <button class="nav-item" data-page="audit"><span>⌁</span>Audit</button>
+      <button class="nav-item" data-page="about"><span>ⓘ</span>About</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span>Backup engine</span>
+      <strong>Netmiko + SSH</strong>
+      <small>Authorized devices only</small>
+    </div>
+  </aside>
+
+  <section class="workspace">
+    <header class="topbar">
+      <div class="top-left">
+        <button class="menu-btn" id="menuButton">☰</button>
+        <div><p id="pageEyebrow">Change-control overview</p><h1 id="pageTitle">Overview</h1></div>
+      </div>
+      <div class="top-actions">
+        <div class="sync-info"><span>Last refresh</span><strong id="lastRefresh">—</strong></div>
+        <button class="btn secondary" id="refreshButton">Refresh</button>
+        <button class="btn primary" id="backupAllButton">Backup all</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="page active" data-page-panel="dashboard">
+        <div class="command-hero">
+          <div>
+            <p class="eyebrow">Configuration assurance</p>
+            <h2>Back up the network before the network changes you.</h2>
+            <p>Track every configuration snapshot, detect changes, compare versions, and maintain an auditable backup history across routers and switches.</p>
+            <div class="hero-actions">
+              <button class="btn primary" data-go="devices">Open device rack</button>
+              <button class="btn secondary" data-go="compare">Compare configs</button>
+            </div>
+          </div>
+          <div class="terminal-preview">
+            <div class="terminal-bar"><span></span><span></span><span></span><b>backup-engine.log</b></div>
+            <pre id="heroTerminal">[READY] Network Config Backup Manager
+[INFO ] 6 devices registered
+[INFO ] Backup scheduler active
+[OK   ] Last configuration snapshot verified</pre>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card"><span>Managed devices</span><strong id="statDevices">0</strong><small>Routers & switches</small></article>
+          <article class="stat-card"><span>Backups stored</span><strong id="statBackups">0</strong><small>Version snapshots</small></article>
+          <article class="stat-card"><span>Changed configs</span><strong id="statChanged">0</strong><small>Since previous backup</small></article>
+          <article class="stat-card"><span>Backup success</span><strong id="statSuccess">0%</strong><small>Recent operations</small></article>
+          <article class="stat-card"><span>Schedule coverage</span><strong id="statScheduled">0%</strong><small>Devices automated</small></article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Rack status</p><h3>Device backup posture</h3></div><button class="link-btn" data-go="devices">View rack</button></div>
+            <div class="rack-grid" id="rackGrid"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Change queue</p><h3>Recent configuration changes</h3></div><button class="link-btn" data-go="backups">History</button></div>
+            <div class="change-list" id="changeList"></div>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Backup activity</p><h3>Latest operations</h3></div></div>
+            <div class="activity-list" id="activityList"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><p class="eyebrow">Sites</p><h3>Device distribution</h3></div></div>
+            <div class="site-bars" id="siteBars"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="page" data-page-panel="devices">
+        <div class="section-head">
+          <div><p class="eyebrow">Network inventory</p><h2>Device Rack</h2><p>Manage authorized routers and switches, SSH profiles, backup scope, and device schedules.</p></div>
+          <button class="btn primary" id="addDeviceButton">Add device</button>
+        </div>
+
+        <article class="panel">
+          <div class="toolbar">
+            <div class="search"><span>⌕</span><input id="deviceSearch" placeholder="Search hostname, IP, site, platform, or tag"></div>
+            <select id="deviceSiteFilter"><option value="all">All sites</option></select>
+            <select id="deviceRoleFilter"><option value="all">All roles</option></select>
+          </div>
+          <div class="device-rack" id="deviceRack"></div>
+        </article>
+      </section>
+
+      <section class="page" data-page-panel="backups">
+        <div class="section-head"><div><p class="eyebrow">Version history</p><h2>Configuration Backups</h2><p>Review snapshot history, change state, configuration source, and integrity hashes.</p></div></div>
+        <article class="panel">
+          <div class="toolbar">
+            <div class="search"><span>⌕</span><input id="backupSearch" placeholder="Search device, version, hash, status, or source"></div>
+            <select id="backupDeviceFilter"><option value="all">All devices</option></select>
+            <select id="backupChangedFilter"><option value="all">All backups</option><option value="changed">Changed only</option><option value="unchanged">Unchanged only</option></select>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Version</th><th>Device</th><th>Source</th><th>Result</th><th>Change</th><th>Hash</th><th>Size</th><th>Timestamp</th></tr></thead>
+              <tbody id="backupTableBody"></tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+
+      <section class="page" data-page-panel="compare">
+        <div class="section-head"><div><p class="eyebrow">Change analysis</p><h2>Compare Configurations</h2><p>Select two configuration snapshots from the same device and inspect line-by-line changes.</p></div></div>
+        <article class="panel compare-controls">
+          <label><span>Device</span><select id="compareDevice"></select></label>
+          <label><span>Base version</span><select id="compareBase"></select></label>
+          <label><span>Target version</span><select id="compareTarget"></select></label>
+          <button class="btn primary" id="runCompareButton">Run diff</button>
+        </article>
+        <div class="diff-summary" id="diffSummary"></div>
+        <div class="diff-layout">
+          <article class="config-pane"><div class="pane-head"><span>Base</span><strong id="baseLabel">—</strong></div><pre id="baseConfig">Select versions to compare.</pre></article>
+          <article class="config-pane"><div class="pane-head"><span>Target</span><strong id="targetLabel">—</strong></div><pre id="targetConfig">Select versions to compare.</pre></article>
+        </div>
+      </section>
+
+      <section class="page" data-page-panel="schedules">
+        <div class="section-head"><div><p class="eyebrow">Automation</p><h2>Backup Schedules</h2><p>Control automated configuration collection, retention, and backup coverage by device.</p></div></div>
+        <div class="schedule-grid" id="scheduleGrid"></div>
+      </section>
+
+      <section class="page" data-page-panel="audit">
+        <div class="section-head"><div><p class="eyebrow">Traceability</p><h2>Audit Log</h2><p>Review device enrollment, backup execution, changes, schedule edits, and configuration access.</p></div></div>
+        <article class="panel"><div class="audit-list" id="auditList"></div></article>
+      </section>
+
+      <section class="page" data-page-panel="about">
+        <div class="section-head"><div><p class="eyebrow">Project architecture</p><h2>About Config Vault</h2><p>A network engineering project demonstrating SSH automation, configuration versioning, scheduling, change detection, and audit control.</p></div></div>
+        <div class="about-grid">
+          <article class="panel about-wide">
+            <p class="eyebrow">Live architecture</p><h3>Browser console → FastAPI → Netmiko → Network Devices</h3>
+            <div class="architecture"><div><strong>Change-control UI</strong><span>Devices, backups & diffs</span></div><b>→</b><div><strong>FastAPI</strong><span>Scheduling & version API</span></div><b>→</b><div><strong>Netmiko SSH</strong><span>Authorized device access</span></div><b>→</b><div><strong>Routers / Switches</strong><span>Running & startup configs</span></div></div>
+          </article>
+          <article class="panel"><p class="eyebrow">Network engineering</p><div class="tag-cloud"><span>SSH</span><span>Cisco IOS</span><span>Config Backup</span><span>Version Control</span><span>Diff</span><span>Scheduling</span><span>Change Control</span></div></article>
+          <article class="panel"><p class="eyebrow">Development</p><div class="tag-cloud"><span>Python</span><span>FastAPI</span><span>SQLite</span><span>Netmiko</span><span>Cryptography</span><span>REST API</span><span>JavaScript</span></div></article>
+        </div>
+      </section>
+    </main>
+  </section>
+</div>
+
+<dialog id="deviceDialog">
+  <form method="dialog" class="dialog-card" id="deviceForm">
+    <div class="dialog-head"><div><p class="eyebrow">Network device</p><h2 id="deviceDialogTitle">Device details</h2></div><button class="icon-btn" value="cancel">×</button></div>
+    <div class="device-details">
+      <div class="device-terminal-card">
+        <div class="rack-face"><span class="rack-led green"></span><span class="rack-led green"></span><span class="rack-led amber"></span><strong id="detailHostname">DEVICE</strong></div>
+        <code id="detailIp">0.0.0.0</code>
+        <span id="detailPlatform">Cisco IOS</span>
+      </div>
+      <div class="form-grid">
+        <label><span>Hostname</span><input id="editHostname"></label>
+        <label><span>Management IP</span><input id="editIp"></label>
+        <label><span>Role</span><input id="editRole"></label>
+        <label><span>Site</span><input id="editSite"></label>
+        <label><span>Platform</span><select id="editPlatform"><option value="cisco_ios">Cisco IOS / IOS XE</option><option value="cisco_nxos">Cisco NX-OS</option><option value="arista_eos">Arista EOS</option></select></label>
+        <label><span>Tags</span><input id="editTags" placeholder="core, campus, edge"></label>
+        <label><span>Backup interval (minutes)</span><input type="number" min="0" id="editInterval"></label>
+        <label><span>Retention versions</span><input type="number" min="1" max="100" id="editRetention"></label>
+      </div>
+    </div>
+    <div class="credential-section">
+      <h4>Live-mode SSH credentials</h4>
+      <p>Credentials are stored only by the local backend and encrypted with a local runtime key.</p>
+      <div class="form-grid">
+        <label><span>Username</span><input id="editUsername" autocomplete="off"></label>
+        <label><span>Password</span><input type="password" id="editPassword" autocomplete="new-password" placeholder="Leave blank to keep existing"></label>
+        <label><span>Enable secret</span><input type="password" id="editSecret" autocomplete="new-password" placeholder="Optional"></label>
+        <label><span>SSH port</span><input type="number" id="editPort" min="1" max="65535" value="22"></label>
+      </div>
+    </div>
+    <div class="device-actions-row">
+      <button type="button" class="btn secondary" id="backupDeviceButton">Backup now</button>
+      <button type="button" class="btn secondary" id="openCompareDeviceButton">Compare versions</button>
+    </div>
+    <div class="detail-sections">
+      <div><h4>Backup history</h4><div class="mini-history" id="deviceBackupHistory"></div></div>
+      <div><h4>Audit history</h4><div class="mini-history" id="deviceAuditHistory"></div></div>
+    </div>
+    <div class="dialog-actions"><button class="btn secondary" value="cancel">Close</button><button type="button" class="btn primary" id="saveDeviceButton">Save device</button></div>
+  </form>
+</dialog>
+
+<dialog id="addDeviceDialog">
+  <form method="dialog" class="dialog-card small-dialog" id="addDeviceForm">
+    <div class="dialog-head"><div><p class="eyebrow">Device enrollment</p><h2>Add network device</h2></div><button class="icon-btn" value="cancel">×</button></div>
+    <div class="form-grid">
+      <label><span>Hostname</span><input id="newHostname" required></label>
+      <label><span>Management IP</span><input id="newIp" required></label>
+      <label><span>Role</span><input id="newRole" required placeholder="Core Switch, Edge Router..."></label>
+      <label><span>Site</span><input id="newSite" required></label>
+      <label><span>Platform</span><select id="newPlatform"><option value="cisco_ios">Cisco IOS / IOS XE</option><option value="cisco_nxos">Cisco NX-OS</option><option value="arista_eos">Arista EOS</option></select></label>
+      <label><span>Tags</span><input id="newTags"></label>
+      <label><span>Username</span><input id="newUsername" autocomplete="off"></label>
+      <label><span>Password</span><input type="password" id="newPassword" autocomplete="new-password"></label>
+    </div>
+    <div class="dialog-actions"><button class="btn secondary" value="cancel">Cancel</button><button class="btn primary" type="submit">Enroll device</button></div>
+  </form>
+</dialog>
+
+<dialog id="backupDialog">
+  <form method="dialog" class="dialog-card small-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">Configuration snapshot</p><h2 id="backupDialogTitle">Backup version</h2></div><button class="icon-btn" value="cancel">×</button></div>
+    <div class="backup-meta" id="backupMeta"></div>
+    <pre class="config-viewer" id="backupConfigViewer"></pre>
+    <div class="dialog-actions"><button class="btn secondary" value="cancel">Close</button><button type="button" class="btn primary" id="downloadBackupButton">Download config</button></div>
+  </form>
+</dialog>
+
+<dialog id="connectionDialog">
+  <form method="dialog" class="dialog-card small-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">Data source</p><h2>Connection settings</h2></div><button class="icon-btn" value="cancel">×</button></div>
+    <label class="radio-card"><input type="radio" name="mode" value="demo" checked><span><strong>Portfolio demo</strong><small>Realistic simulated network devices and configuration history.</small></span></label>
+    <label class="radio-card"><input type="radio" name="mode" value="live"><span><strong>Live backend</strong><small>Connect to the local authorized-device backup engine.</small></span></label>
+    <label><span>Backend URL</span><input id="backendUrlInput" value="http://127.0.0.1:8800"></label>
+    <div class="dialog-actions"><button class="btn secondary" value="cancel">Cancel</button><button class="btn primary" type="button" id="saveConnectionButton">Save</button></div>
+  </form>
+</dialog>
+
+<div class="toast-region" id="toastRegion"></div>
+</body>
+</html>
