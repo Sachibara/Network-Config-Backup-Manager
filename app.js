@@ -391,13 +391,14 @@
     state.data.audit.unshift({id:next,at:new Date().toISOString(),actor,action,detail,device_id:deviceId});
   }
 
-  async function backupDevice(id){
+  async function backupDevice(id, sourceOverride=null){
     const device=(state.data?.devices||[]).find(d=>d.id===id);
     if(!device)return;
+    const source=sourceOverride || ($("backupSource")?.value || "running-config");
     if(state.mode==="live"){
-      toast("Backup started",device.hostname+" is being queried over SSH.");
+      toast("Backup started",device.hostname+" · "+source);
       try{
-        const result=await fetchJson("/api/devices/"+id+"/backup",{method:"POST",body:JSON.stringify({source:"running-config"}),timeout:45000});
+        const result=await fetchJson("/api/devices/"+id+"/backup",{method:"POST",body:JSON.stringify({source}),timeout:45000});
         await loadData();toast("Backup completed",result.device+" v"+result.version+(result.changed?" · change detected":""));
       }catch(e){await loadData();toast("Backup failed",e.message,"error")}
       return;
@@ -410,7 +411,7 @@
     const changed=Math.random()<.25;
     const nextConfig=changed?config+"\n! demo change\nlogging host 192.168.99.20\n":config;
     const hash=(Math.random().toString(16).slice(2,14)).padEnd(12,"0");
-    const backup={id:newId,device_id:id,device:device.hostname,version,source:"running-config",status:"success",changed,hash,size:nextConfig.length,created_at:new Date().toISOString(),config:nextConfig};
+    const backup={id:newId,device_id:id,device:device.hostname,version,source,status:"success",changed,hash,size:nextConfig.length,created_at:new Date().toISOString(),config:nextConfig};
     state.data.backups.unshift(backup);device.last_backup_at=backup.created_at;device.last_status="success";
     addAudit("Backup Engine","Backup completed",device.hostname+" version "+version+" stored"+(changed?"; configuration change detected.":"."),id);
     persistDemo();renderAll();toast("Demo backup completed",device.hostname+" v"+version+(changed?" · change detected":""));
@@ -440,7 +441,29 @@
     ].map(v=>'<span>'+esc(v)+'</span>').join("");
     $("backupConfigViewer").textContent=backup.config||backup.error||"No configuration content stored.";
     $("downloadBackupButton").disabled=backup.status!=="success";
+    $("stageRestoreButton").disabled=backup.status!=="success";
     $("backupDialog").showModal();
+  }
+
+
+  async function stageRestore(){
+    const backup=(state.data?.backups||[]).find(b=>b.id===state.selectedBackup);
+    if(!backup||backup.status!=="success")return;
+
+    if(state.mode==="live"){
+      try{
+        const result=await fetchJson("/api/backups/"+backup.id+"/stage-restore",{method:"POST",body:"{}"});
+        await loadData();
+        toast("Restore candidate staged",result.message||backup.device+" v"+backup.version);
+      }catch(e){
+        toast("Could not stage restore",e.message,"error");
+      }
+      return;
+    }
+
+    addAudit("Jim Camus","Restore candidate staged",backup.device+" v"+backup.version+" selected for controlled rollback review.",backup.device_id);
+    persistDemo();renderAudit();
+    toast("Restore candidate staged",backup.device+" v"+backup.version+" marked for rollback review.");
   }
 
   function downloadBackup(){
@@ -464,9 +487,10 @@
   $("refreshButton").addEventListener("click",()=>loadData(true));
   $("backupAllButton").addEventListener("click",backupAll);
   $("saveDeviceButton").addEventListener("click",saveDevice);
-  $("backupDeviceButton").addEventListener("click",()=>{const id=state.selectedDevice;$("deviceDialog").close();backupDevice(id)});
+  $("backupDeviceButton").addEventListener("click",()=>{const id=state.selectedDevice;const source=$("backupSource").value;$("deviceDialog").close();backupDevice(id,source)});
   $("openCompareDeviceButton").addEventListener("click",()=>{const id=state.selectedDevice;$("deviceDialog").close();openPage("compare");$("compareDevice").value=String(id);updateCompareVersions()});
   $("downloadBackupButton").addEventListener("click",downloadBackup);
+  $("stageRestoreButton").addEventListener("click",stageRestore);
 
   $("addDeviceButton").addEventListener("click",()=>{$("addDeviceForm").reset();$("addDeviceDialog").showModal()});
   $("addDeviceForm").addEventListener("submit",async e=>{
