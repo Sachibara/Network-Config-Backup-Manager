@@ -6,7 +6,7 @@ This project is designed for Network Engineer, NOC, IT Infrastructure, and Netwo
 
 ## Operating Modes
 
-- **Portfolio Demo Mode** — public deployment with realistic simulated routers, switches, configuration versions, diffs, schedules, and audit history.
+- **Browser Workspace Mode** — public deployment with realistic simulated routers, switches, configuration versions, diffs, schedules, and audit history.
 - **Live Backend Mode** — local FastAPI + SQLite backend using Netmiko to connect only to explicitly configured, authorized network devices.
 
 ## Core Features
