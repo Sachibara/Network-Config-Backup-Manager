@@ -213,6 +213,10 @@
       </div>
     </div>
     <div class="device-actions-row">
+      <select id="backupSource" aria-label="Configuration source">
+        <option value="running-config">Running config</option>
+        <option value="startup-config">Startup config</option>
+      </select>
       <button type="button" class="btn secondary" id="backupDeviceButton">Backup now</button>
       <button type="button" class="btn secondary" id="openCompareDeviceButton">Compare versions</button>
     </div>
@@ -246,7 +250,7 @@
     <div class="dialog-head"><div><p class="eyebrow">Configuration snapshot</p><h2 id="backupDialogTitle">Backup version</h2></div><button class="icon-btn" value="cancel">×</button></div>
     <div class="backup-meta" id="backupMeta"></div>
     <pre class="config-viewer" id="backupConfigViewer"></pre>
-    <div class="dialog-actions"><button class="btn secondary" value="cancel">Close</button><button type="button" class="btn primary" id="downloadBackupButton">Download config</button></div>
+    <div class="dialog-actions"><button class="btn secondary" value="cancel">Close</button><button type="button" class="btn secondary" id="stageRestoreButton">Stage restore</button><button type="button" class="btn primary" id="downloadBackupButton">Download config</button></div>
   </form>
 </dialog>
 
