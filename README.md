@@ -60,7 +60,7 @@ The live backend is intentionally local-first:
 - encrypts passwords with a locally generated key
 - excludes the database and encryption key from Git
 - only connects to devices explicitly configured by the operator
-- public demo mode never connects to real infrastructure
+- the public browser workspace never connects to real infrastructure; real SSH collection remains available only through the local authorized backend
 
 Use only on networks and devices you own or are explicitly authorized to administer.
 
