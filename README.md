@@ -1,3 +1,5 @@
+> **Consolidated module:** This project is preserved as source/history, but its public product experience is now part of **[NetOps Enterprise](https://sachibara.github.io/NetOps-Command-Center/)**. The consolidation reduces duplicate portfolio projects and connects this capability to a shared enterprise data/workflow model.
+
 # Network Config Backup Manager
 
 A portfolio-grade network engineering configuration backup and change-control platform.
