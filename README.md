@@ -4,6 +4,11 @@ A portfolio-grade network engineering configuration backup and change-control pl
 
 This project is designed for Network Engineer, NOC, IT Infrastructure, and Network Operations roles. It demonstrates device inventory, SSH-based configuration collection, backup versioning, change detection, scheduling, auditability, and configuration comparison.
 
+
+## Public App
+
+**Live app:** https://sachibara.github.io/Network-Config-Backup-Manager/
+
 ## Operating Modes
 
 - **Browser Workspace Mode** — public deployment with realistic simulated routers, switches, configuration versions, diffs, schedules, and audit history.
